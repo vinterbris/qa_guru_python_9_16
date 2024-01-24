@@ -9,17 +9,6 @@ import pytest
 from selene import browser, have
 
 
-@pytest.fixture(params=[(1600, 900), (1900, 1000), (300, 800), (400, 900)])
-def bparam(request):
-    width, height = request.param
-    browser.config.window_width = width
-    browser.config.window_height = height
-
-    yield
-
-    browser.quit()
-
-
 def test_github_desktop(browser_management):
     if browser_management == 'mobile':
         pytest.skip('Not a mobile resolution')
