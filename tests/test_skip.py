@@ -3,46 +3,32 @@
 Пропустите мобильный тест, если соотношение сторон десктопное (и наоборот)
 """
 import pytest
-from selene import browser
+from selene import browser, have
 
 
-@pytest.fixture()
-def desktop():
-    return 1920, 1080
+@pytest.fixture(params=[(1600, 900), (1900, 1000), (300, 800), (400, 900)])
+def bparam(request):
+    width, height = request.param
+    browser.config.window_width = width
+    browser.config.window_height = height
+
+    yield
+
+    browser.quit()
 
 
-@pytest.fixture()
-def mobile():
-    return 360, 800
-
-
-@pytest.fixture()
-def browser_management(request):
-    if request.param == "desktop":
-        return request.getfixturevalue("desktop")
-    if request.param == "mobile":
-        return request.getfixturevalue("mobile")
-
-@pytest.mark.parametrize("browser_management",
-                         [
-                             pytest.param("desktop"),
-                             pytest.param("mobile", marks=[pytest.mark.skip(reason="not testing mobile")]),
-                         ],
-                         indirect=True)
 def test_github_desktop(browser_management):
-    browser.config.window_width = browser_management[0]
-    browser.config.window_height = browser_management[1]
+    if browser_management == 'mobile':
+        pytest.skip('Not a mobile resolution')
     browser.open('https://github.com/')
-    browser.element('.HeaderMenu-link--sign-in')
+    browser.element('.HeaderMenu-link--sign-in').click()
+    browser.element('.auth-form-header').should(have.text('Sign in to GitHub'))
 
-@pytest.mark.parametrize("browser_management",
-                         [
-                             pytest.param("desktop", marks=[pytest.mark.skip(reason="not testing desktop")]),
-                             pytest.param("mobile"),
-                         ],
-                         indirect=True)
+
 def test_github_mobile(browser_management):
-    browser.config.window_width = browser_management[0]
-    browser.config.window_height = browser_management[1]
+    if browser_management == 'desktop':
+        pytest.skip('Not a desktop resolution')
     browser.open('https://github.com/')
-    browser.element('.HeaderMenu-link--sign-in')
+    browser.element('.HeaderMenu-toggle-bar').click()
+    browser.element('.HeaderMenu-link--sign-in').click()
+    browser.element('.auth-form-header').should(have.text('Sign in to GitHub'))

@@ -2,38 +2,27 @@
 Переопределите параметр с помощью indirect параметризации на уровне теста
 """
 import pytest
-from selene import browser
+from selene import browser, have
 
 
-@pytest.fixture()
-def desktop():
-    return 1920, 1080
-
-
-@pytest.fixture()
-def mobile():
-    return 360, 800
-
-
-@pytest.fixture(params=["desktop", "mobile"])
-def browser_management(request):
-    if request.param == "desktop":
-        return request.getfixturevalue("desktop")
-    if request.param == "mobile":
-        return request.getfixturevalue("mobile")
-
-
-@pytest.mark.parametrize("browser_management", ["desktop"], indirect=True)
+@pytest.mark.parametrize("browser_management", [(1600, 900), (1900, 1000)], indirect=True)
 def test_github_desktop(browser_management):
-    browser.config.window_width = browser_management[0]
-    browser.config.window_height = browser_management[1]
     browser.open('https://github.com/')
-    browser.element('.HeaderMenu-link--sign-in')
+    browser.element('.HeaderMenu-link--sign-in').click()
+    browser.element('.auth-form-header').should(have.text('Sign in to GitHub'))
 
 
-@pytest.mark.parametrize("browser_management", ["mobile"], indirect=True)
+@pytest.mark.parametrize("browser_management", [(300, 800), (400, 900)], indirect=True)
 def test_github_mobile(browser_management):
-    browser.config.window_width = browser_management[0]
-    browser.config.window_height = browser_management[1]
     browser.open('https://github.com/')
-    browser.element('.HeaderMenu-link--sign-in')
+    browser.element('.HeaderMenu-toggle-bar').click()
+    browser.element('.HeaderMenu-link--sign-in').click()
+    browser.element('.auth-form-header').should(have.text('Sign in to GitHub'))
+
+'''
+2. Есть фикстура, которая параметризована всеми возможными сочетаниями высоты и ширин экранов, 
+но для десктопа и мобайла переопределяются эти значения конкретными
+
+3. Параметризовать всеми возможными ситуациями и в тесте если получили не подходящее сочетание, 
+то пропускаем тест
+'''
